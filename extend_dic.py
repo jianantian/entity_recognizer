@@ -5,17 +5,21 @@ def some_little_modify(s):
 	"""在字符串中的(及)前面加上\, 方便转换成正则表达式"""
 	s_1 = s.replace('(', '\(')
 	s_2 = s_1.replace(')', '\)')
-	return s_2
+	s_3 = s_2.replace('+', '\+')
+	return s_3
 
+def find_all(substring, string):
+	start = 0
+	while True:
+		start  = string.find(substring, start)
+		if start == -1:
+			return -1
+		yield start
+		start += len(substring)
 
-
-
-
-
-
-def find_mod(path):
+def find_mod(path, dic):
 	"""用字典中的词发现文本模式"""
-	dic =  open('C:/Users/yingying.zhu/Documents/dicts/total.txt', 'r', encoding= 'utf8')
+	dic =  open(dic, 'r', encoding= 'utf8')
 	word_list = dic.readlines()
 	file_list = os.listdir(path)
 
@@ -30,42 +34,49 @@ def find_mod(path):
 		p = 5
 		q = 5
 		txt_file = txt_fr.read()
-		for word in word_list:
-			inde = word.split('\t')[0]
-			if inde in txt_file:
-				num += 1
-				loc = txt_file.index(inde)
-				for i in range(1, (p+1)):
-					for j in range(1,(q+1)):
-						ext_word = txt_file[loc - i:loc + len(inde) + j]
-						ext_wd = some_little_modify(ext_word)
-						local_ind = ext_wd.index(inde)
-						mod = re.compile(ext_wd[:local_ind]+'(\S{%d})'%len(inde)+ext_wd[local_ind+len(inde):])
-						if mod not in mod_list:
-							mod_list.append(mod)
-							word_count[mod] = 1
-						else:
-							word_count[mod] += 1
+		txt_fr.close()
+		if len(txt_file) > 0:
+			for word in word_list:
+				inde = word.split('\t')[0]
+				loc_list = [w.start() for w in re.finditer(inde, txt_file)]
+				for loc in loc_list:
+					num += 1
+					for i in range(1, (p+1)):
+						for j in range(1,(q+1)):
+							ext_word = txt_file[loc - i:loc + len(inde) + j]
+							ext_wd = some_little_modify(ext_word)
+							local_ind = ext_wd.index(inde)
+							mod = re.compile(ext_wd[:local_ind]+'(\S{%d})'%len(inde)+ext_wd[local_ind+len(inde):])
+							if mod not in mod_list:
+								mod_list.append(mod)
+								word_count[mod] = 1
+							else:
+								word_count[mod] += 1
 	dic.close()
-	txt_fr.close()
 	return mod_list, word_count
 
 
-def find_word(path)
+def find_word(path, mod_list):
 	file_list = os.listdir(path)
 	mod_dict = {}
-	for mod in m_list:
-    	wor_set = set()
-    	for file in file_list:
-        	with open(os.path.join(path, file), 'r', encoding='utf8') as txt_fr:
-            	txt_file = txt_fr.read()
-            	wor_set = wor_set.union(set(re.findall(mod, txt_file)))
-    	num_extract = len(wor_set)
-    	mod_dict[mod] = num_extract
-    return mod_dict
+	for mod in mod_list:
+		wor_set = set()
+		for file in file_list:
+			with open(os.path.join(path, file), 'r', encoding='utf8') as txt_fr:
+				txt_file = txt_fr.read()
+				wor_set = wor_set.union(set(re.findall(mod, txt_file)))
+		num_extract = len(wor_set)
+		mod_dict[mod] = num_extract
+	return mod_dict
 
+
+def score_mod(mod, mod_dict, word_count):
+	import math
+	return float(mod_dict[mod])/float(word_count[mod])*math.log(float(mod_dict[mod]) + 1, 2)
 
 
 path = 'E:/病例特点'
-mod_list, count = find_mod(path)
+dic = 'C:/Users/yingying.zhu/Documents/dicts/disease.txt'
+print (dic)
+mod_list, count = find_mod(path, dic)
 print (mod_list[:15])
