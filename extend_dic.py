@@ -54,7 +54,7 @@ def find_mod(path, dic):
                                     mod_list.append(mod)
                                     word_match[mod] = {word}
                                 else:
-                                    word_match[mod] = word_match[mod].union(word)
+                                    word_match[mod].add(word)
     for mod in mod_list:
         word_count[mod] = len(word_match[mod]) 
     return mod_list, word_count
@@ -94,6 +94,13 @@ def score_word(word, mod_list, mod_count, mod_match):
     import math
     m_list = [mod for mod in mod_list if word in mod_match[mod]]
     return sum([math.log(float(word_count[mod]) + 1, 2) for mod in m_list])/float(len(m_list))
+
+
+def find_exact_time(text):
+    """从文本中发现确切表述的时间, 如2012-09-03   2014-07-  2014-07 2015年08月下旬  2015年08月    2015年9月17日, 并不提取表示时间段的词语, 如三月前等"""
+    import re
+    time_re = r'\d{4}[-年]\d{1,2}[-月]?(?:\d{1,2})?(?:日|下旬|上旬|上旬)?'
+    return re.findall(time_re, text)
 
 
 path = 'E:/病例特点'

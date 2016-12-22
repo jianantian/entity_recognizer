@@ -3,18 +3,18 @@ import os
 import shutil
 
 #类型可以选测试, 训练或调参
-data_type = '测试'
+data_type = '训练'
 
 text_type = '病例特点'
 
-if data_type = '测试':
+if data_type == '测试':
     path = 'E:/new/test_100'
-elif data_type = '训练':
+elif data_type == '训练':
     path = 'E:/new/train_2157'
-elif data_type = '调参':
+elif data_type == '调参':
     path = 'E:/new/para_50'
 
-dise_path = os.path.join(path, text_type)
+dise_path = os.path.join('e:/', text_type)
 if not os.path.exists(dise_path):
     os.mkdir(dise_path)
 
@@ -24,7 +24,7 @@ for patient in patient_list:
     if patient != text_type:
         filename = os.path.join(dise_path, patient + '.txt')
         dise_char = open(filename, 'a+', encoding='utf8')
-        dise[patient] = []
+        #dise[patient] = []
         dir_name = os.path.join(path, patient)
         file_list = os.listdir(dir_name)
         for filename in file_list:

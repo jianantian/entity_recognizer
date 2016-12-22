@@ -1,0 +1,17 @@
+def seg_cut(text, dicts, max_lenth=5):
+    """正向最大匹配法"""
+    start = 0
+    result = ''
+    while start < len(text):
+        temp = text[start:]
+        end = min(start + max_lenth, len(temp))
+        while end > 0:
+            sentence = temp[: end]
+            print (sentence)
+            if sentence not in dicts:
+                end -= 1
+            else:
+                result += sentence + '/'
+                start += len(sentence)
+                break
+    return result
