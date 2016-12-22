@@ -41,7 +41,6 @@ def find_mod(path, dic):
                 for word in word_list:
                     loc_list = [w.start() for w in re.finditer(word, txt_file)]
                     for loc in loc_list:
-                        num += 1
                         for i in range(1, (p+1)):
                             for j in range(1,(q+1)):
                                 ext_word = txt_file[max(0, loc - i): min(loc + len(word) + j, len(txt_file)-1)]
@@ -56,7 +55,8 @@ def find_mod(path, dic):
                                     word_match[mod] = {word}
                                 else:
                                     word_match[mod] = word_match[mod].union(word)
-    [word_count[mod] = len(word_match[mod]) for mod in mod_list] 
+    for mod in mod_list:
+        word_count[mod] = len(word_match[mod]) 
     return mod_list, word_count
 
 
@@ -88,7 +88,7 @@ def find_word(path, mod_list, dic):
 def score_mod(mod, mod_count, word_count):
     """计算模式的评分"""
     import math
-    return float(word_count[mod])/float(mod_count[mod])*math.log(float(word_count[mod]) + 1, 2)
+    return float(word_count[mod])/float(mod_count[mod])*math.log(float(mod_count[mod]) + 1, 2)
 
 def score_word(word, mod_list, mod_count, mod_match):
     import math
