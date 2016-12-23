@@ -43,21 +43,22 @@ def find_mod(path, dic):
                     for loc in loc_list:
                         for i in range(1, (p+1)):
                             for j in range(1,(q+1)):
-                                ext_word = txt_file[max(0, loc - i): min(loc + len(word) + j, len(txt_file)-1)]
-                                ext_wd = some_little_modify(ext_word)
-                                local_ind = ext_wd.index(some_little_modify(word))
-                                try:
-                                    mod = re.compile(ext_wd[:local_ind]+'(\S{%d})'%len(word)+ext_wd[local_ind+len(word):])
-                                except re.error:
-                                    print (word + '\t\t' + ext_word + '\n')
-                                if mod not in mod_list:
-                                    mod_list.append(mod)
-                                    word_match[mod] = {word}
-                                else:
-                                    word_match[mod].add(word)
+                                if loc - i >= 0 and loc + len(word) + j <len(txt_file):
+                                    ext_word = txt_file[loc - i: loc + len(word) + j]
+                                    ext_wd = some_little_modify(ext_word)
+                                    local_ind = ext_wd.index(some_little_modify(word))
+                                    try:
+                                        mod = re.compile(ext_wd[:local_ind]+'(\S{%d})'%len(word)+ext_wd[local_ind+len(word):])
+                                    except re.error:
+                                        print (word + '\t\t' + ext_word + '\n')
+                                    if mod not in mod_list:
+                                        mod_list.append(mod)
+                                        word_match[mod] = {word}
+                                    else:
+                                        word_match[mod].add(word)
     for mod in mod_list:
         word_count[mod] = len(word_match[mod]) 
-    return mod_list, word_count
+    return mod_list, word_count, word_match
 
 
 def find_word(path, mod_list, dic):
@@ -82,7 +83,7 @@ def find_word(path, mod_list, dic):
         mod_match[mod] = wor_set
         new_word = new_word.union(wor_set)
         new_word = new_word.difference(set(word_list))
-    return mod_count, mod_match, new_word
+    return  new_word, mod_count, mod_match
 
 
 def score_mod(mod, mod_count, word_count):
