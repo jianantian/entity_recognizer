@@ -8,6 +8,10 @@ def some_little_modify(s):
         s = s.replace(signal, '\\'+signal)
     return s
 
+def modified(word):
+    #去掉字符串中的\xa0, 以免报错
+    return word.replace('\xa0', '')
+
 def find_all(substring, string):
     start = 0
     while True:
@@ -36,7 +40,7 @@ def find_mod(path, dic):
         with open(os.path.join(path, file), 'r', encoding='utf8') as txt_fr:          
             p = 5
             q = 5
-            txt_file = txt_fr.read()
+            txt_file = modified(txt_fr.read())
             if len(txt_file) > 0:
                 for word in word_list:
                     loc_list = [w.start() for w in re.finditer(word, txt_file)]
@@ -48,7 +52,8 @@ def find_mod(path, dic):
                                     ext_wd = some_little_modify(ext_word)
                                     local_ind = ext_wd.index(some_little_modify(word))
                                     try:
-                                        mod = re.compile(ext_wd[:local_ind]+'(\S{%d})'%len(word)+ext_wd[local_ind+len(word):])
+                                        #mod = re.compile(ext_wd[:local_ind]+'(\S{%d})'%len(word)+ext_wd[local_ind+len(word):])
+                                        mod = (ext_wd[:local_ind], ext_wd[local_ind+len(word):])
                                     except re.error:
                                         print (word + '\t\t' + ext_word + '\n')
                                     if mod not in mod_list:
@@ -61,29 +66,29 @@ def find_mod(path, dic):
     return mod_list, word_count, word_match
 
 
-def find_word(path, mod_list, dic):
-    """用发现的模式去发现文本中的新词"""
-    file_list = os.listdir(path)
-    word_list = read_dict(dic)
-    mod_count = {}
-    #键为发现的模式, 相应的值为匹配到的词的数目
-    mod_match = {}
-    #键为发现的模式, 相应的值为匹配到的词的集合
-    new_word = set()
-    #匹配到的新词的集合
-    for mod in mod_list:
-        wor_set = set()
-        for file in file_list:
-            with open(os.path.join(path, file), 'r', encoding='utf8') as txt_fr:
-                txt_file = txt_fr.read()
-                wor_set = wor_set.union(set(re.findall(mod, txt_file)))
-        #wor_set = wor_set.difference(set(word_list))
-        num_extract = len(wor_set)
-        mod_count[mod] = num_extract
-        mod_match[mod] = wor_set
-        new_word = new_word.union(wor_set)
-        new_word = new_word.difference(set(word_list))
-    return  new_word, mod_count, mod_match
+# def find_word(path, mod_list, dic):
+#     """用发现的模式去发现文本中的新词"""
+#     file_list = os.listdir(path)
+#     word_list = read_dict(dic)
+#     mod_count = {}
+#     #键为发现的模式, 相应的值为匹配到的词的数目
+#     mod_match = {}
+#     #键为发现的模式, 相应的值为匹配到的词的集合
+#     new_word = set()
+#     #匹配到的新词的集合
+#     for mod in mod_list:
+#         wor_set = set()
+#         for file in file_list:
+#             with open(os.path.join(path, file), 'r', encoding='utf8') as txt_fr:
+#                 txt_file = txt_fr.read()
+#                 wor_set = wor_set.union(set(re.findall(mod, txt_file)))
+#         #wor_set = wor_set.difference(set(word_list))
+#         num_extract = len(wor_set)
+#         mod_count[mod] = num_extract
+#         mod_match[mod] = wor_set
+#         new_word = new_word.union(wor_set)
+#         new_word = new_word.difference(set(word_list))
+#     return  new_word, mod_count, mod_match
 
 
 def score_mod(mod, mod_count, word_count):
@@ -109,3 +114,44 @@ dic = 'C:/Users/yingying.zhu/Documents/dicts/disease.txt'
 print (dic)
 mod_list, count = find_mod(path, dic)
 print (mod_list[:15])
+
+
+def find_word(path, mod_list, dic):
+    """用发现的模式去发现文本中的新词"""
+    file_list = os.listdir(path)
+    word_list = read_dict(dic)
+    mod_count = {}
+    #键为发现的模式, 相应的值为匹配到的词的数目
+    mod_match = {}
+    #键为发现的模式, 相应的值为匹配到的词的集合
+    new_word = set()
+    #匹配到的新词的集合
+    for mod in mod_list:
+        wor_set = set()
+        for file in file_list:
+            with open(os.path.join(path, file), 'r', encoding='utf8') as txt_fr:
+                txt_file = modified(txt_fr.read())
+
+            left_index = [w.start() for w in re.finditer(mod[0], txt_file)]
+            right_index = [w.start() for w in re.finditer(mod[1], txt_file)]
+            start = 0
+            for i in range(len(left_index)):
+
+                for j in range(start, len(right_index)):
+                    if right_index[j] > left_index[i] and right_index[j] <= left_index[i+1]:
+                        word = text_file[left_index[i], right_index[j]]
+                        wor_set.add(word)
+                        start += 1
+                        break
+                    elif right_index[j] > left_index[i+1]:
+                        break
+                    else:
+                        start += 1
+
+        #wor_set = wor_set.difference(set(word_list))
+        num_extract = len(wor_set)
+        mod_count[mod] = num_extract
+        mod_match[mod] = wor_set
+        new_word = new_word.union(wor_set)
+        new_word = new_word.difference(set(word_list))
+    return new_word, mod_count, mod_match

@@ -6,6 +6,7 @@ import shutil
 data_type = '训练'
 
 text_type = '病例特点'
+#有两个文件这一部分的名字是'病史特点'
 
 if data_type == '测试':
     path = 'E:/new/test_100'
