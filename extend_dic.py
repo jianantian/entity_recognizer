@@ -8,7 +8,9 @@ def some_little_modify(s):
 def modified(word):
     #去掉字符串中的\xa0, 以免报错
     #文档中中文逗号与英文混用, 把句子中的逗号全部替换为英文逗号
+    #文档中的中文冒号换成英文冒号
     word = word.replace('，', ',')
+    word
     return word.replace('\xa0', '')
 
 def find_all(substring, string):
@@ -68,7 +70,7 @@ def find_mod(file_list, word_list):
         word_count[mod] = len(word_match[mod]) 
     return mod_list, word_count, word_match
 
-
+# TODO: 优化find_word及find_mod函数的速度
 
 def find_word(file_list, mod_list, word_list):
     """用发现的模式去发现文本中的新词"""
@@ -124,12 +126,6 @@ def score_word(word, mod_list, mod_count, mod_match):
     m_list = [mod for mod in mod_list if word in mod_match[mod]]
     return sum([math.log(float(word_count[mod]) + 1, 2) for mod in m_list])/(float(len(m_list))+1)
 
-
-def find_exact_time(text):
-    """从文本中发现确切表述的时间, 如2012-09-03   2014-07-  2014-07 2015年08月下旬  2015年08月    2015年9月17日, 并不提取表示时间段的词语, 如三月前等"""
-    import re
-    time_re = r'\d{4}[-年]\d{1,2}[-月]?(?:\d{1,2})?(?:日|下旬|上旬|上旬)?'
-    return re.findall(time_re, text)
 
 def main(path, text_type):
     import os
