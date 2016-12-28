@@ -3,13 +3,15 @@ import re
 
 def some_little_modify(s):
     """在字符串中的(及)前面加上\, 方便转换成正则表达式"""
-    to_be_removed = ['(', ')', '+', '*']
+    to_be_removed = ['(', ')', '+', '*', '^', '.', '?', '$', '|']
     for signal in to_be_removed:
         s = s.replace(signal, '\\'+signal)
     return s
 
 def modified(word):
     #去掉字符串中的\xa0, 以免报错
+    #文档中中文逗号与英文混用, 把句子中的逗号全部替换为英文逗号
+    word = word.replace('，', ',')
     return word.replace('\xa0', '')
 
 def find_all(substring, string):
@@ -24,31 +26,34 @@ def find_all(substring, string):
 
 def read_dict(dic):
     with open(dic, 'r', encoding= 'utf8') as dic_fr:
-        word_list = [x.split()[0] for x in dic_fr.readlines()]
+        word_list = list(set([x.split()[0] for x in dic_fr.readlines()]))
     return word_list
 
-def find_mod(path, dic):
+
+def find_mod(path, word_list):
     """用字典中的词发现文本模式"""
     file_list = os.listdir(path)
-    word_list = read_dict(dic)
     word_count = {}
     #用一个字典保存, key为发现的文本模式, 键值为匹配该模式的词典中的词的数目
     mod_list = []
     #文本模式以列表形式保存
     word_match = {}
+    p = 5
+    q = 5
     for file in file_list:
-        with open(os.path.join(path, file), 'r', encoding='utf8') as txt_fr:          
-            p = 5
-            q = 5
-            txt_file = modified(txt_fr.read())
-            if len(txt_file) > 0:
+        with open(os.path.join(path, file), 'r', encoding='utf8') as txt_fr:
+            txt_file = txt_fr.readlines()       
+            #txt_file = modified(txt_fr.read())
+        for line in txt_file:
+            line = modified(line)
+            if len(line) > 0:
                 for word in word_list:
-                    loc_list = [w.start() for w in re.finditer(word, txt_file)]
+                    loc_list = [w.start() for w in re.finditer(word, line)]
                     for loc in loc_list:
                         for i in range(1, (p+1)):
                             for j in range(1,(q+1)):
-                                if loc - i >= 0 and loc + len(word) + j <len(txt_file):
-                                    ext_word = txt_file[loc - i: loc + len(word) + j]
+                                if loc - i >= 0 and loc + len(word) + j <len(line):
+                                    ext_word = line[loc - i: loc + len(word) + j]
                                     ext_wd = some_little_modify(ext_word)
                                     local_ind = ext_wd.index(some_little_modify(word))
                                     try:
@@ -66,29 +71,49 @@ def find_mod(path, dic):
     return mod_list, word_count, word_match
 
 
-# def find_word(path, mod_list, dic):
-#     """用发现的模式去发现文本中的新词"""
-#     file_list = os.listdir(path)
-#     word_list = read_dict(dic)
-#     mod_count = {}
-#     #键为发现的模式, 相应的值为匹配到的词的数目
-#     mod_match = {}
-#     #键为发现的模式, 相应的值为匹配到的词的集合
-#     new_word = set()
-#     #匹配到的新词的集合
-#     for mod in mod_list:
-#         wor_set = set()
-#         for file in file_list:
-#             with open(os.path.join(path, file), 'r', encoding='utf8') as txt_fr:
-#                 txt_file = txt_fr.read()
-#                 wor_set = wor_set.union(set(re.findall(mod, txt_file)))
-#         #wor_set = wor_set.difference(set(word_list))
-#         num_extract = len(wor_set)
-#         mod_count[mod] = num_extract
-#         mod_match[mod] = wor_set
-#         new_word = new_word.union(wor_set)
-#         new_word = new_word.difference(set(word_list))
-#     return  new_word, mod_count, mod_match
+
+def find_word(path, mod_list, word_list):
+    """用发现的模式去发现文本中的新词"""
+    file_list = os.listdir(path)
+    mod_count = {}
+    #键为发现的模式, 相应的值为匹配到的词的数目
+    mod_match = {}
+    #键为发现的模式, 相应的值为匹配到的词的集合
+    new_word = set()
+    #匹配到的新词的集合
+    for mod in mod_list:
+        word_set = set()
+        for file in file_list:
+            with open(os.path.join(path, file), 'r', encoding='utf8') as txt_fr:
+                #txt_file = modified(txt_fr.read())
+                txt_list = txt_fr.readlines()
+            for line in txt_list:
+                line = modified(line)         
+                left_index = [w.end() for w in re.finditer(mod[0], line)]
+                right_index = [w.start() for w in re.finditer(mod[1], line)]
+                start = 0
+                i, j = 0, 0
+                for i in range(len(left_index)):
+                    if start < len(right_index):
+                        for j in range(start, len(right_index)):
+                            if right_index[j] > left_index[i] and (i == len(left_index)-1 or  right_index[j] <= left_index[i+1]):
+                                word = line[left_index[i]: right_index[j]]
+                                if len(word) < 15: 
+                                    word_set.add(word)
+                                    start += 1
+                                break
+                            elif i < len(left_index) - 1 and right_index[j] > left_index[i+1]:
+                                break
+                            else:
+                                start += 1
+
+        #wor_set = wor_set.difference(set(word_list))
+        num_extract = len(word_set)
+        mod_count[mod] = num_extract
+        mod_match[mod] = word_set
+        new_word = new_word.union(word_set)
+    new_word = list(new_word.difference(set(word_list)))
+    return new_word, mod_count, mod_match
 
 
 def score_mod(mod, mod_count, word_count):
@@ -99,7 +124,7 @@ def score_mod(mod, mod_count, word_count):
 def score_word(word, mod_list, mod_count, mod_match):
     import math
     m_list = [mod for mod in mod_list if word in mod_match[mod]]
-    return sum([math.log(float(word_count[mod]) + 1, 2) for mod in m_list])/float(len(m_list))
+    return sum([math.log(float(word_count[mod]) + 1, 2) for mod in m_list])/(float(len(m_list))+1)
 
 
 def find_exact_time(text):
@@ -108,50 +133,32 @@ def find_exact_time(text):
     time_re = r'\d{4}[-年]\d{1,2}[-月]?(?:\d{1,2})?(?:日|下旬|上旬|上旬)?'
     return re.findall(time_re, text)
 
+def main():
+    path = 'E:/病例特点_2'
+    dic = 'C:/Users/yingying.zhu/Documents/dicts/test.txt'
 
-path = 'E:/病例特点'
-dic = 'C:/Users/yingying.zhu/Documents/dicts/disease.txt'
-print (dic)
-mod_list, count = find_mod(path, dic)
-print (mod_list[:15])
-
-
-def find_word(path, mod_list, dic):
-    """用发现的模式去发现文本中的新词"""
-    file_list = os.listdir(path)
+    mod_selected = []
     word_list = read_dict(dic)
-    mod_count = {}
-    #键为发现的模式, 相应的值为匹配到的词的数目
-    mod_match = {}
-    #键为发现的模式, 相应的值为匹配到的词的集合
-    new_word = set()
-    #匹配到的新词的集合
-    for mod in mod_list:
-        wor_set = set()
-        for file in file_list:
-            with open(os.path.join(path, file), 'r', encoding='utf8') as txt_fr:
-                txt_file = modified(txt_fr.read())
+    iter_times = 0
+    while iter_times < 2:
+        mod_list, word_count, word_match = find_mod(path, word_list)
+        new_word, mod_count, mod_match = find_word(path,mod_list, word_list)
 
-            left_index = [w.start() for w in re.finditer(mod[0], txt_file)]
-            right_index = [w.start() for w in re.finditer(mod[1], txt_file)]
-            start = 0
-            for i in range(len(left_index)):
 
-                for j in range(start, len(right_index)):
-                    if right_index[j] > left_index[i] and right_index[j] <= left_index[i+1]:
-                        word = text_file[left_index[i], right_index[j]]
-                        wor_set.add(word)
-                        start += 1
-                        break
-                    elif right_index[j] > left_index[i+1]:
-                        break
-                    else:
-                        start += 1
+        mod_score_list = [score_mod(mod, mod_count, word_count) for mod in mod_list]
+        mod_score = filter(lambda f: f > 1, sorted(zip(mod_list, mod_score_list), key= lambda x: x[1], reverse=True)[:20])
+        #模式库是需要每一轮都增加的还是每次都取最好的???????
+        mod_selected.extend([x[0] for x in mod_score])
 
-        #wor_set = wor_set.difference(set(word_list))
-        num_extract = len(wor_set)
-        mod_count[mod] = num_extract
-        mod_match[mod] = wor_set
-        new_word = new_word.union(wor_set)
-        new_word = new_word.difference(set(word_list))
-    return new_word, mod_count, mod_match
+        new_word, mod_count, mod_match = find_word(path,mod_selected, word_list)
+        word_score_list = [score_word(word, mod_selected, mod_count, mod_match) for word in new_word]
+        word_score = filter(lambda f: f > 0, sorted(zip(new_word, word_score_list), key= lambda x: x[1], reverse=True)[:20])
+        word_list.extend([x[0] for x in word_score])
+
+        iter_times += 1
+
+if __name__ == '__main__':
+    main()
+
+
+    
