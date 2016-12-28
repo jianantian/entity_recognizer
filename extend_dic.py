@@ -1,6 +1,3 @@
-import os
-import re
-
 def some_little_modify(s):
     """在字符串中的(及)前面加上\, 方便转换成正则表达式"""
     to_be_removed = ['(', ')', '+', '*', '^', '.', '?', '$', '|']
@@ -30,14 +27,15 @@ def read_dict(dic):
     return word_list
 
 
-def find_mod(path, word_list):
+def find_mod(file_list, word_list):
+    import re
     """用字典中的词发现文本模式"""
-    file_list = os.listdir(path)
     word_count = {}
     #用一个字典保存, key为发现的文本模式, 键值为匹配该模式的词典中的词的数目
     mod_list = []
     #文本模式以列表形式保存
     word_match = {}
+
     p = 5
     q = 5
     for file in file_list:
@@ -72,9 +70,9 @@ def find_mod(path, word_list):
 
 
 
-def find_word(path, mod_list, word_list):
+def find_word(file_list, mod_list, word_list):
     """用发现的模式去发现文本中的新词"""
-    file_list = os.listdir(path)
+    import re
     mod_count = {}
     #键为发现的模式, 相应的值为匹配到的词的数目
     mod_match = {}
@@ -133,9 +131,14 @@ def find_exact_time(text):
     time_re = r'\d{4}[-年]\d{1,2}[-月]?(?:\d{1,2})?(?:日|下旬|上旬|上旬)?'
     return re.findall(time_re, text)
 
-def main():
+def main(path, text_type):
+    import os
+    # global path
+    #是否需要全局变量?????
     path = 'E:/病例特点_2'
-    dic = 'C:/Users/yingying.zhu/Documents/dicts/test.txt'
+    dic_path = 'C:/Users/yingying.zhu/Documents/dicts/'
+    dic_name = text_type + '.txt'
+    dic = os.path.join(dic_path, dic_name)
 
     mod_selected = []
     word_list = read_dict(dic)
@@ -146,13 +149,13 @@ def main():
 
 
         mod_score_list = [score_mod(mod, mod_count, word_count) for mod in mod_list]
-        mod_score = filter(lambda f: f > 1, sorted(zip(mod_list, mod_score_list), key= lambda x: x[1], reverse=True)[:20])
-        #模式库是需要每一轮都增加的还是每次都取最好的???????
+        mod_score = list(filter(lambda f: f[1] > 1, sorted(zip(mod_list, mod_score_list), key= lambda x: x[1], reverse=True)))[:20]
+        #模式库是需要每一轮都增加的还是每次都取最好的??????? 
         mod_selected.extend([x[0] for x in mod_score])
 
         new_word, mod_count, mod_match = find_word(path,mod_selected, word_list)
         word_score_list = [score_word(word, mod_selected, mod_count, mod_match) for word in new_word]
-        word_score = filter(lambda f: f > 0, sorted(zip(new_word, word_score_list), key= lambda x: x[1], reverse=True)[:20])
+        word_score = list(filter(lambda f: f[1] > 0, sorted(zip(new_word, word_score_list), key= lambda x: x[1], reverse=True)))[:20]
         word_list.extend([x[0] for x in word_score])
 
         iter_times += 1
