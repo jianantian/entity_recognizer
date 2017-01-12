@@ -1,8 +1,10 @@
-import pypinyin
-from pypinyin import pinyin, lazy_pinyin
-import numpy as np
-import re
 import logging
+import numpy as np
+import pypinyin
+import re
+
+from pypinyin import lazy_pinyin
+from pypinyin import pinyin
 
 logging.basicConfig(format='%(asctime)s: %(levelname)s: %(message)s')
 
