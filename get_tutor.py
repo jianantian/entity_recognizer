@@ -259,5 +259,5 @@ if __name__ == '__main__':
     dic_type = 'tutor'
     res = get_user_dict(txt_path, dic_path, ord_path, dic_type)
     with open('C:/Users/yingying.zhu/Desktop/user_dic.txt', 'w', encoding='utf8') as fr:
-        fr.writelines(res)
+        fr.write('\n'.join(res))
 
