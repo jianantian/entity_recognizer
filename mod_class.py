@@ -15,7 +15,7 @@ def frequence(word, path):
 
 class Mod(object):
 
-	def __init__(self, mod_name, mod_match=[], word_match=[], mod_match_neg=[], mod_match_unlabel=[]):
+	def __init__(self, mod_name, mod_match=None, word_match=None, mod_match_neg=None, mod_match_unlabel=None):
 		
 		self.name = mod_name
 		self.match = mod_match
@@ -42,7 +42,7 @@ class Mod(object):
 
 class Word(object):
 
-	def __init__(self, word_name, match_list=[], frequence=0):
+	def __init__(self, word_name, match_list=None, frequence=None):
 		
 		self.name = word_name
 		self.match = match_list    #匹配 word 的模式列表
@@ -62,7 +62,15 @@ class Word(object):
 		return self.score
 
 	
+class Entity(object):
 
+	def __init__(self, start=None, end=None, time=None, patient=None):
+		self.start = start
+		self.end = end
+		self.time = time
+		self.patient = patient
+
+	
 
 
 

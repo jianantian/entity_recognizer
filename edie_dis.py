@@ -48,8 +48,9 @@ def levenshtein(str_1, str_2):
 
     return tmp_mat[-1, -1]
 
-s_1 = '肺腺癌'
-s_2 = ''
+s_1 = '肺'
+s_2 = '肺"'
+print(get_pinyin('肺"'))
 dis = levenshtein(s_1, s_2)
 rate = dis/max(len(get_pinyin(s_1)), len(get_pinyin(s_2)))
 print(rate)
