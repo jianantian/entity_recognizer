@@ -39,7 +39,7 @@ def get_ordinary_word(ord_path):
     return ord_dic
 
 
-def get_dict(dic_path, dic_type):
+def get_seed(dic_path, dic_type):
     dic_name = dic_type + '.txt'
     dic = os.path.join(dic_path, dic_name)
     with open(dic, 'r', encoding='utf8') as dic_fr:
@@ -60,7 +60,7 @@ def get_neg_list(dic_path, ord_path, dic_type):
     return neg_list
 
 
-def manual_filtration(neg_list, word):
+def manual_filtration(word, neg_list):
     """作用在 word 上, 若该词为负例则返回 True, 否则返回 False"""
     pattern_1 = r',|\.|:|;'
     pattern_2 = r'行|示|为|较'
@@ -78,15 +78,15 @@ def manual_filtration(neg_list, word):
         return True
 
 
-def get_txt_file(path):
+def get_txt_file(txt_path):
     """ 从整理好的文本中读取相应内容做成一个列表, 
         列表的每个元为一个句子. 该结果仅用于提取字典使用, 
         不能用于后面的任务, 因为所有病人的文本都混到了一起 """
     txt_file = []
-    file_list = os.listdir(path)
+    file_list = os.listdir(txt_path)
     for file in file_list:
         if os.path.splitext(file)[-1] == '.json':
-            with open(os.path.join(path, file), 'r', encoding='utf8') as txt_fr:
+            with open(os.path.join(txt_path, file), 'r', encoding='utf8') as txt_fr:
                 txt_dic = json.load(txt_fr)
             for txt_date in txt_dic.keys():
                 line_list = [line.strip() for line in txt_dic[txt_date].split('。') if line.strip() !='']
@@ -216,10 +216,10 @@ def score_word(word, mod_list, word_count, mod_match):
     return sum([math.log(word_count[mod] + 1, 2) for mod in m_list]) / (len(m_list) + 1)
 
 
-def get_words(txt_path, dic_path, ord_path, dic_type, iter_times=3, inital_lenth_mod=80, 
+def get_user_dict(txt_path, dic_path, ord_path, dic_type, iter_times=3, inital_lenth_mod=80, 
     lenth_word=50, extend_rate=10, mod_threshold=0.5, word_threshold=1.0):
    
-    word_list = get_dict(dic_path, dic_type)
+    word_list = get_seed(dic_path, dic_type)
     neg_list = get_neg_list(dic_path, ord_path, dic_type)
     txt_file = get_txt_file(txt_path)
 
@@ -246,7 +246,7 @@ def get_words(txt_path, dic_path, ord_path, dic_type, iter_times=3, inital_lenth
 
         num += 1
 
-        print("Run time: %d"%num)
+        print("Run time: NO. %d"%num + "\t\tAdd %d words to dictionary"%len(res))
 
     return res
 
@@ -257,5 +257,7 @@ if __name__ == '__main__':
     dic_path = 'C:/Users/yingying.zhu/Documents/dicts'
     ord_path = 'C:/Users/yingying.zhu/Documents/现代汉语常用词表.txt'
     dic_type = 'tutor'
-    res = get_words(txt_path, dic_path, ord_path, dic_type)
-    pprint(res)
+    res = get_user_dict(txt_path, dic_path, ord_path, dic_type)
+    with open('C:/Users/yingying.zhu/Desktop/user_dic.txt', 'w', encoding='utf8') as fr:
+        fr.writelines(res)
+
