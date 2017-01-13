@@ -82,6 +82,7 @@ class Tempor(object):
 
 	def __init__(self, name, start=None, end=None, patient=None, scope=None):
 		""" scope 表示时间实体的作用域, 及该范围内的实体对应的都是该时间"""
+
 		self.name = name
         self.start = start
         self.end = end		
