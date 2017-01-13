@@ -18,9 +18,9 @@ def trans_punctuation(word):
     # 去掉字符串中的\xa0, 以免报错
     # 文档中中文标点与英文混用, 把句子中的标点替换为半角, 句号不转换, 便于和小数点区分, 用于断句
     word = word.replace('\xa0', '')
-    trans_table= str.maketrans('，：“”（）',',:\"\"()')
+    trans_table= str.maketrans('，：“”（）；、',',:\"\"();&')
     word = word.translate(trans_table)
-    return word.replace('\xa0', '')
+    return word
 
 
 def remove_punctuation(word):
@@ -51,7 +51,7 @@ def get_neg_list(dic_path, ord_path, dic_type):
     neg_list = get_ordinary_word(ord_path)
     dic_list = os.listdir(dic_path)
     for dic_name in dic_list:
-        if ('txt' in dic_name) and (dic_type not in dic_name) and ('total' not in dic_name):
+        if (dic_name.endswith('txt')) and (dic_type not in dic_name) and ('total' not in dic_name):
             neg_path = os.path.join(dic_path, dic_name)
             with open(neg_path, 'r', encoding='utf8') as dic_fr:
                 w_list = [trans_punctuation(x.split()[0]) for x in dic_fr.readlines() if len(x.strip()) > 0]
@@ -62,14 +62,15 @@ def get_neg_list(dic_path, ord_path, dic_type):
 
 def manual_filtration(word, neg_list):
     """作用在 word 上, 若该词为负例则返回 True, 否则返回 False"""
-    pattern_1 = r',|\.|:|;'
-    pattern_2 = r'行|示|为|较'
-    pattern_3 = r'切除|标本'
-    remove_word_list = neg_list + ['病理', '癌', '炎']
+    pattern_1 = r',|\.|:|;|"'
+    pattern_2 = r'行|示|为|较|见|天|音'
+    pattern_3 = r'切除|标本|摄取|存在|活检|穿刺|开口|引流'
+    pattern_4 = r'^[A-Za-z0-9_]+$'
+    remove_word_list = neg_list + ['病理', '癌', '炎', '占位']
     tnm_pattern = r'[Tt]\S{1,2}[Nn][xX0123][Mm][01]'
     word_no_punc = remove_punctuation(word)
     if ((not re.search(pattern_1, word)) and (not re.search(pattern_2, word)) and (not re.search(pattern_3, word)) 
-        and len(word_no_punc) > 1 and (word_no_punc not in remove_word_list)):
+        and (not re.search(pattern_4, word)) and len(word_no_punc) > 1 and (word_no_punc not in remove_word_list)):
         if (not re.search(tnm_pattern, word)) and re.search(r'\d', word):
             return True
         else:
@@ -85,7 +86,7 @@ def get_txt_file(txt_path):
     txt_file = []
     file_list = os.listdir(txt_path)
     for file in file_list:
-        if os.path.splitext(file)[-1] == '.json':
+        if file.endswith('json'):
             with open(os.path.join(txt_path, file), 'r', encoding='utf8') as txt_fr:
                 txt_dic = json.load(txt_fr)
             for txt_date in txt_dic.keys():
@@ -188,7 +189,7 @@ def find_word(txt_file, mod_list, word_list, neg_list):
         unlabeled_word = word_set.difference(set(word_list))
         #neg_word_type1 = unlabeled_word.intersection(set(neg_list))       
         #unlabeled_word = unlabeled_word.difference(neg_word_type1)
-        neg_word = set([word for word in unlabeled_word if manual_filtration(word, neg_list)])
+        neg_word = set([word for word in unlabeled_word if manual_filtration(word, neg_list) or (remove_punctuation(word) in word_list)])
         
         #neg_word = neg_word_type1.union(neg_word_type2)
         unlabeled_word = unlabeled_word.difference(neg_word)       
@@ -246,11 +247,11 @@ def get_user_dict(txt_path, dic_path, ord_path, dic_type, iter_times=3, inital_l
 
         num += 1
 
-        print("Run time: NO. %d"%num + "\t\tAdd %d words to dictionary"%len(res))
+        print("Run time: NO. %d"%num + "\t\tAdd %d words to dictionary"%len(add_word))
 
     return res
 
-
+# 在负例词典中加入手术, 药物和身体部位
 if __name__ == '__main__':
 
     txt_path = 'e:/test/病例特点/'

@@ -1,22 +1,21 @@
-# _*_ encoding: utf8 _*_
+import os
+import json
+import re
+from functools import reduce
 
-def modified(word):
-    """去掉字符串中的\xa0, 以免报错
-        文档中中文逗号与英文混用, 把句子中的逗号全部替换为英文逗号
-        文档中的中文冒号换成英文冒号"""
-    word = word.replace('，', ',')
-    word
-    return word.replace('\xa0', '')
+
+def trans_punctuation(word):
+    # 去掉字符串中的\xa0, 以免报错
+    # 文档中中文标点与英文混用, 把句子中的标点替换为半角, 句号不转换, 便于和小数点区分, 用于断句
+    word = word.replace('\xa0', '')
+    trans_table= str.maketrans('，：“”（）；、',',:\"\"();&')
+    word = word.translate(trans_table)
+    return word
 
 
 def extrac_part(data_type, text_type):
     """从病例中提取特定类型的文本, 如病例特点, 病史等
         每一个病人的资料保存在一个json文件中, key值为相应的病历时间"""
-
-    import os
-    import json
-    import re
-    from functools import reduce
 
     date_match = r'\d+_\d+-\d+_(\d{8})\d+_\d+\.html'
 
@@ -43,21 +42,16 @@ def extrac_part(data_type, text_type):
         for filename in file_list:
             ext = os.path.splitext(filename)[-1]
             with open(os.path.join(dir_name, filename), 'r', encoding='utf8') as fr:
-                #print(os.path.join(dir_name, filename))
                 doc = json.load(fr)                    
             for content in doc['Data']:
                 if text_type in content.keys():
                     raw_date = doc['Doc']
                     text_date = re.search(date_match, raw_date).group(1)
-                    #text_content = modified(content[text_type])
-                    #txt_list = [line.strip() for line in text_content.split('。') if line.strip() !='']
-                    #text_dir[text_date] = reduce(lambda x, y: x+'\n'+y, txt_list)
-                    text_dir[text_date] = modified(content[text_type])
+                    text_dir[text_date] = trans_punctuation(content[text_type])
         text_to_write = json.dumps(text_dir, ensure_ascii=False, indent=4, sort_keys = True)
         out_name = os.path.join(out_path, patient + '.json')
         with open(out_name, 'w', encoding='utf8') as out_text:
             out_text.write(text_to_write)
-            #json.dump(text_to_write, out_text, ensure_ascii=False)
 
 
 def check_empty(path):
