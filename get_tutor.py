@@ -251,7 +251,8 @@ def get_user_dict(txt_path, dic_path, ord_path, dic_type, iter_times=3, inital_l
 
     return res
 
-# 在负例词典中加入手术, 药物和身体部位
+# 在负例词典中加入手术, 药物和身体部位, 并且身体部位词可以和方位词进行组合
+# 方位词主要有: 上下左右半前后
 if __name__ == '__main__':
 
     txt_path = 'e:/test/病例特点/'
