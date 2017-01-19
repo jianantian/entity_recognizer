@@ -8,7 +8,7 @@ def trans_punctuation(word):
     # 去掉字符串中的\xa0, 以免报错
     # 文档中中文标点与英文混用, 把句子中的标点替换为半角, 句号不转换, 便于和小数点区分, 用于断句
     word = word.replace('\xa0', '')
-    trans_table= str.maketrans('，：“”（）；、',',:\"\"();&')
+    trans_table= str.maketrans('，：“”（）；、',',:""();&')
     word = word.translate(trans_table)
     return word
 

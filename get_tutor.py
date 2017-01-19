@@ -5,6 +5,11 @@ import re
 import string
 
 from pprint import pprint
+from functools import reduce
+
+def list_add(a, b):
+    return a+b
+
 
 def modify_for_re(word):
     """在字符串中的(及)前面加上\, 方便转换成正则表达式"""
@@ -64,7 +69,7 @@ def manual_filtration(word, neg_list):
     """作用在 word 上, 若该词为负例则返回 True, 否则返回 False"""
     pattern_1 = r',|\.|:|;|"'
     pattern_2 = r'行|示|为|较|见|天|音'
-    pattern_3 = r'切除|标本|摄取|存在|活检|穿刺|开口|引流'
+    pattern_3 = r'切除|标本|摄取|存在|活检|穿刺|开口|引流|胸痛|患者|治疗|不适|受限|疼痛|基本|压缩'
     pattern_4 = r'^[A-Za-z0-9_]+$'
     remove_word_list = neg_list + ['病理', '癌', '炎', '占位']
     tnm_pattern = r'[Tt]\S{1,2}[Nn][xX0123][Mm][01]'
@@ -120,7 +125,7 @@ def find_mod(txt_file, word_list):
     p = 5
     q = 5
     for line in txt_file:
-        line = trans_punctuation(line)
+        #line = trans_punctuation(line)
         if len(line) > 0:
             for word in word_list:
                 word = modify_for_re(word)
@@ -162,7 +167,7 @@ def find_word(txt_file, mod_list, word_list, neg_list):
     for mod in mod_list:
         word_set = set()
         for line in txt_file:
-            line = trans_punctuation(line)        
+            #line = trans_punctuation(line)        
             left_index = [w.end() for w in re.finditer(mod[0], line)]
             right_index = [w.start() for w in re.finditer(mod[1], line)]
             start = 0
@@ -217,7 +222,19 @@ def score_word(word, mod_list, word_count, mod_match):
     return sum([math.log(word_count[mod] + 1, 2) for mod in m_list]) / (len(m_list) + 1)
 
 
-def get_user_dict(txt_path, dic_path, ord_path, dic_type, iter_times=3, inital_lenth_mod=80, 
+def postmodify_word(word):
+    """在一些明显不合理的词前面加上适当的前缀"""
+    res = []
+    direc_list = ['左', '右', '双']
+    if re.search(r'^侧|叶|肺', word) and not re.search(r'[左右]', word):
+        for direc in direc_list:
+            res.append(direc + word)
+    else:
+        res.append(word)
+    return res
+
+
+def get_user_dict(txt_path, dic_path, ord_path, dic_type, iter_times=5, inital_lenth_mod=80, 
     lenth_word=50, extend_rate=10, mod_threshold=0.5, word_threshold=1.0):
    
     word_list = get_seed(dic_path, dic_type)
@@ -242,9 +259,14 @@ def get_user_dict(txt_path, dic_path, ord_path, dic_type, iter_times=3, inital_l
         word_score_list = [score_word(word, mod_selected, word_count, mod_match) for word in new_word]
         word_score = list(filter(lambda f: f[1] > word_threshold, sorted(zip(new_word, word_score_list), key=lambda x: x[1], reverse=True)))[:lenth_word]
         add_word = [x[0] for x in word_score]
+        #add_word_modify = list(reduce(list_add, (postmodify_word(x) for x in add_word)))
+        #word_list = word_list + add_word_modify
+        #word_set = set(word_list)
+        #word_list = list(word_set)
+        #res = res.union(word_set.intersection(set(add_word_modify)))
+
         word_list.extend(add_word)
         res.extend(add_word)
-
         num += 1
 
         print("Run time: NO. %d"%num + "\t\tAdd %d words to dictionary"%len(add_word))
@@ -261,5 +283,5 @@ if __name__ == '__main__':
     dic_type = 'tutor'
     res = get_user_dict(txt_path, dic_path, ord_path, dic_type)
     with open('C:/Users/yingying.zhu/Desktop/user_dic.txt', 'w', encoding='utf8') as fr:
-        fr.write('\n'.join(res))
+        fr.write('\n'.join(list(res)))
 

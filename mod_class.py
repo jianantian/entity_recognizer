@@ -66,9 +66,10 @@ class Word(object):
 
 class Entity(object):
 
-    def __init__(self, name, start=None, end=None, time=None, patient=None):
+    def __init__(self, name, entity_type, start=None, end=None, time=None, patient=None):
 
         self.name = name
+        self.type = entity_type
         self.start = start
         self.end = end
         self.time = time
@@ -80,11 +81,13 @@ class Entity(object):
 
 class Tempor(object):
 
-	def __init__(self, name, start=None, end=None, patient=None, scope=None):
-		""" scope 表示时间实体的作用域, 及该范围内的实体对应的都是该时间"""
+	def __init__(self, name, start=None, end=None, patient=None, entity_pos=after, scope=None):
+		""" scope 表示时间实体的作用域, 及该范围内的实体对应的都是该时间
+			entity_pos 表示该时间对应的实体的相对位置, 即是在时间之前还是时间之后, 取值为 before 或 after """
 
 		self.name = name
         self.start = start
         self.end = end		
         self.patient = patient
         self.scope = scope
+        self.entity_pos = entity_pos
